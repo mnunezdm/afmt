@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.8.2-bis](https://github.com/xixiaofinland/afmt/compare/v0.8.1...v0.8.2) (2025-03-11)
+
+* [#95](https://github.com/xixiaofinland/afmt/issues/95) Allow to minify code
+
 ## [0.8.2](https://github.com/xixiaofinland/afmt/compare/v0.8.1...v0.8.2) (2025-03-11)
 
 
