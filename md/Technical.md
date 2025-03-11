@@ -41,7 +41,7 @@ Download the lists of Apex repo and format them.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/xixiaofinland/afmt.git
+   git clone https://github.com/mnunezdm/afmt.git
    cd afmt
    ```
 

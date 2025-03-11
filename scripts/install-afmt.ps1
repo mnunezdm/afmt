@@ -16,7 +16,7 @@ $ErrorActionPreference = "Stop"
 
 # --- CONFIGURATIONS ---
 
-$Repo          = "xixiaofinland/afmt"
+$Repo          = "mnunezdm/afmt"
 $ApiUrl        = "https://api.github.com/repos/$Repo/releases/latest"
 $BinaryName    = "afmt.exe"
 $InstallFolder = "$env:USERPROFILE\AppData\Local\Programs\afmt"

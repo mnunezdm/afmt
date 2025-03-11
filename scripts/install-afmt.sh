@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-REPO="xixiaofinland/afmt"
+REPO="mnunezdm/afmt"
 API_URL="https://api.github.com/repos/${REPO}/releases/latest"
 TMP_DIR="$(mktemp -d)"
 INSTALL_DIR="$HOME/.local/bin"

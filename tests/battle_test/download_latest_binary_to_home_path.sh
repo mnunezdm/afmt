@@ -4,7 +4,7 @@
 set -e
 
 # Variables
-REPO="xixiaofinland/afmt"
+REPO="mnunezdm/afmt"
 API_URL="https://api.github.com/repos/$REPO/releases/latest"
 DOWNLOAD_DIR="/tmp/afmt_download"
 INSTALL_DIR="$HOME"  # You can change this to "$HOME/afmt" if preferred
