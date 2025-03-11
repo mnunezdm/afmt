@@ -33,11 +33,7 @@ pub struct PrettyConfig {
 
 impl PrettyConfig {
     pub fn new(indent_size: u32) -> Self {
-        if indent_size == 0 {
-            panic!("indent_size must be greater than 0")
-        } else {
-            Self { indent_size }
-        }
+        Self { indent_size }
     }
 }
 
