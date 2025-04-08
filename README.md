@@ -29,7 +29,7 @@
 
 This fork was originaly made for allowing afmt to be used to uglify/minify instead of prettify. This is done by removing all newlines and whitespaces from the code. This is useful because salesforce measures the size of code based on the actual characters of the code and not the compiled version so removing unnecessary whitespaces will allow to fit more code in the same size and temporarily reduce the size of the code.
 
-Huge credits to the original author of `afmt` for creating this amazing tool. 
+Huge credits to the original author of `afmt` [xixiaofinland](https://github.com/xixiaofinland) for creating this amazing tool
 
 ## 📘 Introduction
 
@@ -87,7 +87,7 @@ iwr -useb https://raw.githubusercontent.com/mnunezdm/afmt/main/scripts/install-a
 
 ```ps1
 # Step 1: Review the script manually
-Invoke-WebRequest -Uri https://raw.githubusercontent.com/xixiaofinland/afmt/main/scripts/install-afmt.ps1 -OutFile install-afmt.ps1
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/mnunezdm/afmt/main/scripts/install-afmt.ps1 -OutFile install-afmt.ps1
 notepad install-afmt.ps1  # Inspect the content
 
 # Step 2: Run after trust
