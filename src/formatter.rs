@@ -5,13 +5,16 @@ use crate::doc_builder::DocBuilder;
 use crate::message_helper::{red, yellow};
 use crate::utility::{
     assert_no_missing_comments, collect_comments, enrich, set_thread_comment_map,
-    set_thread_source_code,
+    set_thread_source_code, truncate_snippet,
 };
 use serde::Deserialize;
 use std::sync::mpsc;
 use std::thread;
 use std::{fs, path::Path};
 use tree_sitter::{Node, Parser, Tree};
+
+#[allow(unused_imports)]
+use crate::utility::print_comment_map;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
@@ -154,7 +157,8 @@ impl Formatter {
 
         let result = pretty_print(doc_ref, config.max_width);
 
-        //print_comment_map(&ast_tree);
+        // debugging tool: use this to print named node value + comments in bucket
+        // print_comment_map(&ast_tree);
 
         assert_no_missing_comments();
 
@@ -173,7 +177,8 @@ impl Formatter {
 
         if root_node.has_error() {
             if let Some(error_node) = Self::find_last_error_node(root_node) {
-                let error_snippet = &source_code[error_node.start_byte()..error_node.end_byte()];
+                let error_snippet =
+                    truncate_snippet(&source_code[error_node.start_byte()..error_node.end_byte()]);
                 println!(
                     "Error in node kind: {}, at byte range: {}-{}, snippet: {}",
                     yellow(error_node.kind()),
@@ -182,7 +187,8 @@ impl Formatter {
                     error_snippet,
                 );
                 if let Some(p) = error_node.parent() {
-                    let parent_snippet = &source_code[p.start_byte()..p.end_byte()];
+                    let parent_snippet =
+                        truncate_snippet(&source_code[p.start_byte()..p.end_byte()]);
                     println!(
                         "Parent node kind: {}, at byte range: {}-{}, snippet: {}",
                         yellow(p.kind()),

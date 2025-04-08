@@ -1311,11 +1311,18 @@ impl<'a> DocBuild<'a> for GenericIdentifier {
         }
     }
 }
+
+#[derive(Debug)]
+pub struct ElseClause {
+    pub else_node: ValueNode, // The 'else' keyword node
+    pub statement: Statement, // The actual else-block or nested if
+}
+
 #[derive(Debug)]
 pub struct IfStatement {
     pub condition: ParenthesizedExpression,
     pub consequence: Statement,
-    pub alternative: Option<Statement>,
+    pub alternative: Option<ElseClause>,
     pub node_context: NodeContext,
 }
 
@@ -1323,7 +1330,17 @@ impl IfStatement {
     pub fn new(node: Node) -> Self {
         assert_check(node, "if_statement");
 
-        let alternative = node.try_c_by_n("alternative").map(|a| Statement::new(a));
+        let alternative = node.try_c_by_n("alternative").map(|alt_stmt| {
+            let else_node = node
+                .children(&mut node.walk())
+                .find(|n| n.kind() == "else")
+                .expect("a mandatory `else` node is missing");
+
+            ElseClause {
+                else_node: ValueNode::new(else_node),
+                statement: Statement::new(alt_stmt),
+            }
+        });
 
         Self {
             condition: ParenthesizedExpression::new(node.c_by_n("condition")),
@@ -1349,38 +1366,24 @@ impl<'a> DocBuild<'a> for IfStatement {
             }
 
             // Handle the 'else' part
-            if let Some(ref a) = self.alternative {
-                match a {
-                    Statement::If(_) => {
-                        if self.consequence.is_block() {
-                            result.push(b.txt(" else "));
-                        } else {
-                            result.push(b.nl());
-                            result.push(b.txt("else "));
-                        }
-                        result.push(a.build(b)); // Recursively build the nested 'else if' statement
-                    }
-                    Statement::Block(_) => {
-                        if self.consequence.is_block() {
-                            result.push(b.txt(" else "));
-                        } else {
-                            result.push(b.nl());
-                            result.push(b.txt("else "));
-                        }
-                        result.push(a.build(b));
-                    }
-                    // Handle "else" with a single statement
-                    _ => {
-                        if self.consequence.is_block() {
-                            result.push(b.txt(" else "));
-                        } else {
-                            result.push(b.nl());
-                            result.push(b.txt("else"));
-                            result.push(b.indent(b.nl()));
-                        }
-                        result.push(a.build(b)); // Build the else statement
+            if let Some(ref alt) = self.alternative {
+                if self.consequence.is_block() {
+                    result.push(b.txt(" "));
+
+                    result.push(alt.else_node.build(b));
+                    result.push(b.txt(" "));
+                } else {
+                    result.push(b.nl());
+
+                    result.push(alt.else_node.build(b));
+
+                    if !matches!(alt.statement, Statement::If(_) | Statement::Block(_)) {
+                        result.push(b.indent(b.nl()));
+                    } else {
+                        result.push(b.txt(" "));
                     }
                 }
+                result.push(alt.statement.build(b));
             }
         });
     }
@@ -2753,12 +2756,17 @@ impl ReturnStatement {
 
 impl<'a> DocBuild<'a> for ReturnStatement {
     fn build_inner(&self, b: &'a DocBuilder<'a>, result: &mut Vec<DocRef<'a>>) {
+        if self.exp.is_none() {
+            build_with_comments_and_punc_attached(b, &self.node_context, result, |b, result| {
+                result.push(b.txt("return"));
+            });
+            return;
+        }
+
         build_with_comments_and_punc(b, &self.node_context, result, |b, result| {
             result.push(b.txt("return"));
-            if let Some(ref exp) = self.exp {
-                result.push(b.txt(" "));
-                result.push(exp.build(b));
-            }
+            result.push(b.txt(" "));
+            result.push(self.exp.as_ref().unwrap().build(b));
         });
     }
 }
@@ -3319,22 +3327,33 @@ impl BreakStatement {
     pub fn new(node: Node) -> Self {
         assert_check(node, "break_statement");
 
+        let identifier = node.try_c_by_k("identifier").map(|n| ValueNode::new(n));
+        let node_context = if identifier.is_none() {
+            NodeContext::with_inner_punctuation(&node)
+        } else {
+            NodeContext::with_punctuation(&node)
+        };
+
         Self {
-            identifier: node.try_c_by_k("identifier").map(|n| ValueNode::new(n)),
-            node_context: NodeContext::with_inner_punctuation(&node),
+            identifier,
+            node_context,
         }
     }
 }
 
 impl<'a> DocBuild<'a> for BreakStatement {
     fn build_inner(&self, b: &'a DocBuilder<'a>, result: &mut Vec<DocRef<'a>>) {
+        if self.identifier.is_none() {
+            build_with_comments_and_punc_attached(b, &self.node_context, result, |b, result| {
+                result.push(b.txt("break"));
+            });
+            return;
+        }
+
         build_with_comments_and_punc(b, &self.node_context, result, |b, result| {
             result.push(b.txt("break"));
-
-            if let Some(ref n) = self.identifier {
-                result.push(b.txt(" "));
-                result.push(n.build(b));
-            }
+            result.push(b.txt(" "));
+            result.push(self.identifier.as_ref().unwrap().build(b));
         });
     }
 }
@@ -3365,13 +3384,17 @@ impl ContinueStatement {
 
 impl<'a> DocBuild<'a> for ContinueStatement {
     fn build_inner(&self, b: &'a DocBuilder<'a>, result: &mut Vec<DocRef<'a>>) {
+        if self.identifier.is_none() {
+            build_with_comments_and_punc_attached(b, &self.node_context, result, |b, result| {
+                result.push(b.txt("continue"));
+            });
+            return;
+        }
+
         build_with_comments_and_punc(b, &self.node_context, result, |b, result| {
             result.push(b.txt("continue"));
-
-            if let Some(ref n) = self.identifier {
-                result.push(b.txt(" "));
-                result.push(n.build(b));
-            }
+            result.push(b.txt(" "));
+            result.push(self.identifier.as_ref().unwrap().build(b));
         });
     }
 }

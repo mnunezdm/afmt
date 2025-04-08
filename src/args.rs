@@ -5,6 +5,8 @@ pub struct Args {
     pub path: String,
     pub config: Option<String>,
     pub write: bool,
+    pub time: bool,
+    pub check: bool,
 }
 
 pub fn get_args() -> Args {
@@ -35,6 +37,21 @@ pub fn get_args() -> Args {
                 .help("Write the formatted result back to the file")
                 .action(clap::ArgAction::SetTrue),
         )
+        .arg(
+            ClapArg::new("time")
+                .short('t')
+                .long("time")
+                .help("Display execution time after formatting")
+                .action(clap::ArgAction::SetTrue),
+        )
+        .arg(
+            ClapArg::new("check")
+                .short('C')
+                .long("check")
+                .help("Verify if the file is already formatted; exit with non-zero status if not")
+                .conflicts_with("write")
+                .action(clap::ArgAction::SetTrue),
+        )
         .after_help(
             "EXAMPLES:\n\
              \n\
@@ -46,6 +63,12 @@ pub fn get_args() -> Args {
              \n\
              # Use a specific config file\n\
              afmt --config .afmt.toml ./file.cls\n\
+             \n\
+             # Display execution time after formatting\n\
+             afmt --time ./file.cls\n\
+             \n\
+             # Verify if the file is already formatted\n\
+             afmt --check ./file.cls\n\
             ",
         )
         .get_matches();
@@ -57,5 +80,7 @@ pub fn get_args() -> Args {
             .to_string(),
         config: matches.get_one::<String>("config").map(|s| s.to_string()),
         write: matches.get_flag("write"),
+        time: matches.get_flag("time"),
+        check: matches.get_flag("check"),
     }
 }

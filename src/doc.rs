@@ -201,11 +201,13 @@ impl<'a> PrettyPrinter<'a> {
         let mut remaining_width = self.max_width.saturating_sub(self.col);
         let mut stack = vec![chunk];
         let mut chunks = &self.chunks as &[Chunk];
+        let mut within_group = true;
 
         loop {
             let chunk = if let Some(chunk) = stack.pop() {
                 chunk
             } else if let Some((chunk, more_chunks)) = chunks.split_last() {
+                within_group = false; // step out and look forward now
                 chunks = more_chunks;
                 *chunk
             } else {
@@ -214,7 +216,12 @@ impl<'a> PrettyPrinter<'a> {
 
             match chunk.doc_ref {
                 Doc::Newline | Doc::NewlineWithNoIndent => return true,
-                Doc::ForceBreak => return false,
+                Doc::ForceBreak => {
+                    // fix: https://github.com/xixiaofinland/afmt/issues/97
+                    if within_group {
+                        return false;
+                    }
+                }
                 Doc::Softline => {
                     if chunk.flat {
                         if remaining_width >= 1 {

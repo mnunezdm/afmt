@@ -1,8 +1,60 @@
 # Changelog
 
-## [0.8.2-bis](https://github.com/xixiaofinland/afmt/compare/v0.8.1...v0.8.2) (2025-03-11)
+## [0.12.2-bis](https://github.com/xixiaofinland/afmt/compare/v0.12.1...v0.12.2) (2025-04-07)
+
+
+### Features
 
 * [#95](https://github.com/xixiaofinland/afmt/issues/95) Allow to minify code
+
+
+## [0.12.2](https://github.com/xixiaofinland/afmt/compare/v0.12.1...v0.12.2) (2025-04-07)
+
+
+### Bug Fixes
+
+* allow comments to attach to 'else' node to fix idempotent issue ([8afe1c3](https://github.com/xixiaofinland/afmt/commit/8afe1c3c6ba6d22822929fb5eca3105436d56630))
+
+## [0.12.1](https://github.com/xixiaofinland/afmt/compare/v0.12.0...v0.12.1) (2025-04-05)
+
+
+### Bug Fixes
+
+* idempotent issue [#97](https://github.com/xixiaofinland/afmt/issues/97) ([cdc84cf](https://github.com/xixiaofinland/afmt/commit/cdc84cf8115b65521f00722a418856c4f86cec67))
+
+## [0.12.0](https://github.com/xixiaofinland/afmt/compare/v0.11.0...v0.12.0) (2025-04-04)
+
+
+### Features
+
+* add idempotent feature in battle test script ([8a9c097](https://github.com/xixiaofinland/afmt/commit/8a9c09756b4e7234ca15dd87ae93ad68cb75de28))
+
+
+### Bug Fixes
+
+* idempotent issue for continue/break/new with comments [#114](https://github.com/xixiaofinland/afmt/issues/114) ([f503c22](https://github.com/xixiaofinland/afmt/commit/f503c22a7fc63cbfd30a892961f1ada5a4be368b))
+* use ai enhanced logo ([8619f16](https://github.com/xixiaofinland/afmt/commit/8619f16d085f712b3dbb0cf0b35ff05e5e076830))
+
+## [0.11.0](https://github.com/xixiaofinland/afmt/compare/v0.10.0...v0.11.0) (2025-03-19)
+
+
+### Features
+
+* add --check flag ([7eea4ba](https://github.com/xixiaofinland/afmt/commit/7eea4bafb406f0aa5ea05ef7a875a9dae2b54242))
+
+## [0.10.0](https://github.com/xixiaofinland/afmt/compare/v0.9.0...v0.10.0) (2025-03-18)
+
+
+### Features
+
+* show execution time in -t parameter ([4774761](https://github.com/xixiaofinland/afmt/commit/47747613ff75bde70408b25d36d195c6488b2d4c))
+
+## [0.9.0](https://github.com/xixiaofinland/afmt/compare/v0.8.2...v0.9.0) (2025-03-14)
+
+
+### Features
+
+* support java doc ([752116e](https://github.com/xixiaofinland/afmt/commit/752116e62014dccd6ca140a305ad3128a6a23526))
 
 ## [0.8.2](https://github.com/xixiaofinland/afmt/compare/v0.8.1...v0.8.2) (2025-03-11)
 

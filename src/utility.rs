@@ -10,6 +10,16 @@ use crate::{
 use std::{cell::Cell, collections::HashMap};
 use tree_sitter::{Node, Tree, TreeCursor};
 
+const SNIPPET_MAX_LEN: usize = 80;
+
+pub fn truncate_snippet(snippet: &str) -> String {
+    if snippet.len() <= SNIPPET_MAX_LEN {
+        snippet.to_string()
+    } else {
+        format!("{}…", &snippet[..SNIPPET_MAX_LEN])
+    }
+}
+
 thread_local! {
     static THREAD_SOURCE_CODE: Cell<Option<&'static str>>
         = const{ Cell::new(None) };
@@ -131,13 +141,17 @@ pub fn assert_no_missing_comments() {
 }
 
 pub fn is_punctuation_node(node: &Node) -> bool {
-    node.kind() == "," || node.kind() == ";"
+    matches!(node.kind(), "," | ";")
+}
+
+fn is_associable_unnamed_node(node: &Node) -> bool {
+    is_punctuation_node(node) || matches!(node.kind(), "else")
 }
 
 pub fn collect_comments(cursor: &mut TreeCursor, comment_map: &mut CommentMap) {
     let node = cursor.node();
 
-    if (!node.is_named() || node.is_extra()) && !is_punctuation_node(&node) {
+    if (!node.is_named() || node.is_extra()) && !is_associable_unnamed_node(&node) {
         return;
     }
 
@@ -217,7 +231,7 @@ pub fn collect_comments(cursor: &mut TreeCursor, comment_map: &mut CommentMap) {
                 // There's no "last associable node" yet, so keep it pending
                 pending_pre_comments.push(comment);
             }
-        } else if child.is_named() || is_punctuation_node(&child) {
+        } else if child.is_named() || is_associable_unnamed_node(&child) {
             // It's an associable node
             let child_id = child.id();
 
@@ -284,6 +298,24 @@ pub fn build_with_comments<'a, F>(
     handle_post_comments(b, bucket, result);
 }
 
+pub fn build_with_comments_core<'a, F>(
+    b: &'a DocBuilder<'a>,
+    node_context: &NodeContext,
+    result: &mut Vec<DocRef<'a>>,
+    handle_members: F,
+) where
+    F: FnOnce(&'a DocBuilder<'a>, &mut Vec<DocRef<'a>>),
+{
+    let bucket = get_comment_bucket(&node_context.id);
+    handle_pre_comments(b, bucket, result);
+
+    if bucket.dangling_comments.is_empty() {
+        handle_members(b, result);
+    } else {
+        result.push(b.concat(handle_dangling_comments(b, bucket)));
+    }
+}
+
 pub fn build_with_comments_and_punc<'a, F>(
     b: &'a DocBuilder<'a>,
     node_context: &NodeContext,
@@ -292,10 +324,37 @@ pub fn build_with_comments_and_punc<'a, F>(
 ) where
     F: FnOnce(&'a DocBuilder<'a>, &mut Vec<DocRef<'a>>),
 {
-    build_with_comments(b, node_context, result, handle_members);
+    build_with_comments_core(b, node_context, result, handle_members);
+
+    let bucket = get_comment_bucket(&node_context.id);
+    if bucket.dangling_comments.is_empty() {
+        handle_post_comments(b, bucket, result);
+    }
 
     if let Some(ref n) = node_context.punc {
         result.push(n.build(b));
+    }
+}
+
+// fix: https://github.com/xixiaofinland/afmt/issues/114
+pub fn build_with_comments_and_punc_attached<'a, F>(
+    b: &'a DocBuilder<'a>,
+    node_context: &NodeContext,
+    result: &mut Vec<DocRef<'a>>,
+    handle_members: F,
+) where
+    F: FnOnce(&'a DocBuilder<'a>, &mut Vec<DocRef<'a>>),
+{
+    build_with_comments_core(b, node_context, result, handle_members);
+
+    let bucket = get_comment_bucket(&node_context.id);
+
+    if let Some(ref n) = node_context.punc {
+        result.push(n.build(b));
+    }
+
+    if bucket.dangling_comments.is_empty() {
+        handle_post_comments(b, bucket, result);
     }
 }
 
@@ -355,15 +414,9 @@ pub fn handle_pre_comments<'a>(
             docs.push(b.txt(" "));
         } else {
             // if it's in group(), then multi-line mode is selected in fits()
-            // otherwise, do nothing
             docs.push(b.force_break());
 
             // 1st element heading logic is handled in the preceding node;
-            // except the preceding is an unnamed node like `else`
-            if comment.has_prev_node_else_keyword() {
-                docs.push(b.nl());
-            }
-
             if i != 0 {
                 if comment.has_newline_above() {
                     docs.push(b.empty_new_line());
